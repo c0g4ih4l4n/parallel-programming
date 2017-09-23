@@ -63,6 +63,7 @@ matrix_2D * mul_parallel_col (matrix_2D * A, matrix_2D * B) {
 // Parallel column and row
 matrix_2D * mul_parallel (matrix_2D * A, matrix_2D * B) {
 
+    // check condition of muliplication matrix
     if (A->col != B->row) 
         return NULL;
 
@@ -75,10 +76,14 @@ matrix_2D * mul_parallel (matrix_2D * A, matrix_2D * B) {
 
     init_memory (result, A->row, B->col);
 
+
+    // private memory for parallel
     int start_i, end_i, start_j, end_j, id, i_row, j_col, i, j, k;
     
+    // parallel calculate
     #pragma omp parallel private(start_i, end_i, start_j, end_j, id, i, j, k, i_row, j_col)
     {
+        // cal i_row and j_col
         id = omp_get_thread_num();
         i_row = id / NUM_THREAD_COL;
         j_col = id - i_row * NUM_THREAD_COL;
@@ -106,26 +111,28 @@ matrix_2D * mul_parallel (matrix_2D * A, matrix_2D * B) {
             end_j = ((j_col + 1) * result->col) / NUM_THREAD_COL;
 
 
+        // each thread id execute hcn have row (start_i, end_i) 
+        // and col (start_j, end_j)
         for (i = start_i; i < end_i + 1; i++) 
             for (j = start_j; j < end_j + 1; j++) {
                 result->arr[i][j] = 0;
                 for (k = 0; k < A->col; k++) 
                     result->arr[i][j] += A->arr[i][k] * B->arr[k][j];
             }
-                
-
-
     }
 
     return result;
 }
 
+// init random value of matrix 
 void init_value (matrix_2D * A) {
     int i, j;
     srand(time(NULL));   // should only be called once
 
+    // for faster execute
     int row = A->row, col = A->col;
     int ** arr = A->arr;
+
     for (i = 0; i < row; i++) {
         for (j = 0; j < col; j++) {
             * (* (arr + i) + j) = rand();
@@ -133,6 +140,7 @@ void init_value (matrix_2D * A) {
     }
 }
 
+// init memory for matrix
 void init_memory (matrix_2D * A, int row, int col) {
     int i;
     A->row = row; A->col = col;
@@ -145,6 +153,8 @@ void init_memory (matrix_2D * A, int row, int col) {
 
 
 
+// multiplication matrix in sequence 
+// for check result purpose
 matrix_2D * mul_sequence (matrix_2D * A, matrix_2D * B) {
     matrix_2D * C;
     int i = 0, j = 0, k = 0;
